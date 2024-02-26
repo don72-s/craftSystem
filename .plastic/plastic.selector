@@ -1,0 +1,3 @@
+rep "WitchCraft@Otaku_Revolution@cloud"
+  path "/"
+    smartbranch "/main/Prototype1/test_GUI/craft_operation_branch/기술 테이블 시스템 테스트 브랜치" changeset "90"                                                      
