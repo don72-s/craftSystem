@@ -317,7 +317,7 @@
 > > {
 > >     public WaxBurnerTechRecipe()
 > >     {
-> >         //품질은 131이상 131이하인 값을 요구하며, 이후의 태그들이 기본 요구 태그들을 의미.
+> >         //품질은 131이상 131이하인 값을 요구하며, 이후의 태그들이 기본 요구 태그를 의미.
 > >         InitData(131, 131, Tags.HOLINESS, Tags.PROTECTION, Tags.STABILITY, Tags.CHANGE, Tags.BEAUTY, Tags.FORM_INCENSE_BURNER, Tags.UNSTRUCTURED);
 > >     }
 > > 
