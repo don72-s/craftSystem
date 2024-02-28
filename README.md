@@ -20,8 +20,8 @@
 > [2. 제작 시스템 정의](#제작_시스템_정의)   
 ><br>
 > [3. 아이템 결정 시스템 정의](#아이템_결정_시스템_정의)   
->
-> [4. 데이터베이스 입력](#데이터베이스_입력)   
+><br>
+> [4. 간단한 조합 예시 및 설명](#간단한_조합_예시_및_설명)   
 ></h3>
 >
 
@@ -215,3 +215,141 @@
 >>```
 >>
 >>
+<br><br>
+
+># 아이템_결정_시스템_정의
+>제작 결과 출력된 결과물**UndetermindItem**의 속성과 조건들을 비교하여 해당하는 **Item**종류를 결정하는 시스템을 정의한다.   
+><br>
+>아이템의 결정 조건은 **필요 태그들을 포함**하는지 (기본 체크사항)   
+>다음으로 **추가 선택 기준을 만족**하는지 (세부 선택 기준)   
+>마지막으로 **유일한 선택사항으로서 존재**해야 하는지 (조건에 부합하는 유일한 아이템 종류)   
+><br>
+>위의 세가지 체크의 순으로 이루어지며 이러한 체크를 **모든**아이템에 대하여 수행한다.   
+><br>
+>순차적으로 체크한다는 **변하지 않는 흐름**이 존재하므로 이 또한 **템플릿 패턴**을 적용할 수 있으며, 전체적인 흐름은 다음과 같다.   
+><br>
+>![filteringFlow](https://github.com/don72-s/craftSystem/assets/66211881/297a30f5-afaf-4541-993e-f14b15c01956)
+>
+>>## 태그의 이진화
+>>태그의 **포함, 정확히 일치, 포함하지 않음**등의 태그 연산을 조금 더 용이하게 하기 위해서 가지고있는 태그 정보들을 하나의 정수로 통합시킨다.   
+>><br>
+>>태그는 **Enum**값을 가지므로 결국 **정수값**이며 **서로 겹치지 않는**다.   
+>><br>
+>>필요한 연산조건들과 태그 데이터의 특성을 고려하면 **비트연산**으로 처리하기 최적인 구조임을 알 수 있다.
+>>```cpp
+>>
+>>  long tagL = 0;
+>>
+> >     //태그들의 리스트를 받아 long타입의 정수로 변환.
+> >     public void TagsToLong(params Tags[] _tags) { 
+> >     
+> >         tagL = 0;
+> >         foreach (Tags _tag in _tags) {
+> >             //각 태그의 enum값 만큼 왼쪽으로 시프트 한 값을 누적해서 더함.
+> >             tagL +=  1L << ((int)_tag);
+> >         }
+> >         
+> >     }
+>>```
+><br>
+>
+>>## 태그 연산의 예시
+>>1번 태그와 3번 태그를 가진 값이 변환된 long타입의 변수는 이진수로 나타내면 다음과 같을 것이다.   
+>>**101**(b)   
+>><br>
+>>**포함 연산** : 1번, 3번, 4번 태그가 포함되어있는지 확인을 원한다면 **or** 연산 후 **원래 값이 변했는지**확인해 보면 된다.   
+>>(0101 | 1101) == 0101 //좌측값은 1101이 되므로 false가 나오며 **4번값**이 없기 때문에 옳은 판단을 했음을 알 수 있다.    
+>><br>
+>>**완벽 일치 연산** : 일치 연산은 **기본 필터**연산 이후에 이루어지며, 완벽 일치 연산은 **기본 필터**에서 요구되는 태그들 이외에는 존재하지 않음을 의미한다.   
+>>따라서 단순히 **기본 요구 태그**값과 **같은 값**인지 확인하면 된다.   
+>>101 == 101 //두 값이 **정확히**일치하므로 완벽 일치 연산을 통과한다고 볼 수 있다.   
+>><br>
+>>**포함하지 않음 연산** : 2번 태그를 포함하지 않는지를 확인하기 위해서는 **and**연산 후 결과값이 **0**인지 확인해 보면 된다.   
+>>(101 & 010) == 0 //좌측값은 0이 되므로 true가 나오며 **2번값**을 포함하지 않기에 옳은 판단을 했음을 알 수 있다.   
+>
+><br><br>
+>
+>>## 구조 설계
+>>**템플릿 패턴**을 이용하므로 이전의 기술 제조 클래스와 유사한 구조로 설계한다.
+>>```cpp
+> > public static class TechRecipeChecker {
+> > 
+> > 
+> >         private static Dictionary<ItemID, TechRecipe> dic_TechRecipes = null;
+> >         private static List<ItemID> filteredRecipes = null;
+> > 
+> >         public static ItemID CheckRecipe(UndeterminedItemInfo _inputItemInfo) {
+> > 
+> >             if (dic_TechRecipes == null) {
+> >                 initTechRecipeTable();
+> >             }
+> > 
+> >             filteredRecipes = new List<ItemID>();
+> > 
+> >             //태그의 long타입 변환
+> >             long tagsL = ConvertTagsToLongType(_inputItemInfo.tagDic);
+> > 
+> >             //기본 요구태그 확인
+> >             BasicRecipeFilter(tagsL, _inputItemInfo.quality);
+> >             if (filteredRecipes.Count == 0) return ItemID._57_UNKNOWN_SUBSTANCE;
+> > 
+> >             //추가 태그 조건 확인
+> >             DetailReqCheck(tagsL, _inputItemInfo);
+> >             if (filteredRecipes.Count == 0) return ItemID._57_UNKNOWN_SUBSTANCE;
+> >             if (filteredRecipes.Count == 1) return filteredRecipes[0];
+> > 
+> >             //유일성 확인
+> >             UniqueRecipeCheck();
+> >             if (filteredRecipes.Count == 0) return ItemID._57_UNKNOWN_SUBSTANCE;
+> >             if (filteredRecipes.Count == 1) return filteredRecipes[0];
+> > 
+> >             //두개 이상의 선택지가 남을 경우 레벨디자인(설계) 오류 처리.
+> >             return ItemID._99999_ERROR_OCCURRED;
+> > 
+> >         }
+>>```
+>>
+>>위와 같이 정해진 흐름에 따라 진행되며, 모든 아이템 조건은 미리 초기화된 테이블을 사용한다.   
+>><br>
+>>초기화 예시 [ 왁스 향로 ]
+>>```cpp
+> > class WaxBurnerTechRecipe : TechRecipe
+> > {
+> >     public WaxBurnerTechRecipe()
+> >     {
+> >         //품질은 131이상 131이하 / 이하 태그들이 기본 요구 태그들을 의미.
+> >         InitData(131, 131, Tags.HOLINESS, Tags.PROTECTION, Tags.STABILITY, Tags.CHANGE, Tags.BEAUTY, Tags.FORM_INCENSE_BURNER, Tags.UNSTRUCTURED);
+> >     }
+> > 
+> >     //완벽 일치를 요구하며, 따라서 완벽 요구 메소드를 오버라이드 하여 조건을 활성화 시킨다.
+> >     protected override bool IsPerfectlyMatch(long _inputTags)
+> >     {
+> >         return _inputTags == reqTags;
+> >     }
+> > }
+>>```
+>>**※부모인 TechRecipe**는 **abstract**클래스로 선언하여 구체화되지 않은 아이템 레시피로서의 객체화를 방지하기로 한다.
+>
+<br><br>
+
+># 간단한_조합_예시_및_설명
+>![cr1](https://github.com/don72-s/craftSystem/assets/66211881/459ad55c-9e52-4a90-96a8-f91a973d6e78)   
+>**첫번째 조합** : **시더우드 가루**와 **왁스**를 **압연**기술을 이용해 조합한다.   
+> **압연**은 **공통된 태그**만을 반환하는 조합법으로 결과물의 태그에는 **안정-STABILITY**만이 존재하며   
+>결과물 조건에 부합하는 아이템이 존재하지 않아 **알수없는 무언가 - UNKNOWN_SUBSTANCE**를 반환한다.   
+><hr>
+>
+>![cr2](https://github.com/don72-s/craftSystem/assets/66211881/b7ef06db-b913-4b21-9ffd-b04661352aa7)   
+>**두번째 조합** : **시더우드 가루**와 **왁스**를 **수증기 증류**기술을 이용해 조합한다.   
+>**수증기 증류**기술의 사용 조건은 **허브 태그를 가진 아이템 존재**이며, **시더우드 가루**에 **허브**태그가 존재하므로 조합이 가능하다.   
+>결과물 조건에 부합하는 **믹스 오일**아이템을 반환한다.   
+><hr>
+>
+>![cr3](https://github.com/don72-s/craftSystem/assets/66211881/d04072b0-5e70-46bf-8bc6-b66b202b47c4)   
+>**세번째 조합** : **시더우드 가루**를 **수증기 증류**기술을 이용해 조합한다.
+>조합 결과에 부합하는 아이템은 **시더우드 오일**과 **믹스 오일**이다.   
+>하지만 **믹스 오일**은 다른 **오일** 태그를 가진 결과 아이템이 **존재하지 않을 경우** 선택됨 이라는 특징을 가지므로   
+>결과 대상에서 제외되어, 남은 아이템인 **시더우드 오일**이 최종 결과물로써 반환된다.
+
+
+
