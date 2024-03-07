@@ -1,6 +1,8 @@
 # craftSystem
 물질의 태그와 조합법의 조건과 규칙에 따라 조합을 시행하는 제작 시스템을 구현.
 
+unity ver - 2019.4.29f1
+
 <br><br>
 
 # 개요
@@ -41,16 +43,16 @@
   //아이템 ID 태그
   public enum ItemID {
   
-      /// <summary 에러발생 ID </summary
+      /// <summary> 에러발생 ID </summary>
       _99999_ERROR_OCCURRED,
   
-      ///<summary때죽나무 수지</summary
+      ///<summary>때죽나무 수지</summary>
       _01_AGARWOOD_RESIN,
-      ///<summary몰약 수지</summary
+      ///<summary>몰약 수지</summary>
       _02_FRANKINCENSE_RESIN,
-      ///<summary유향 수지</summary
+      ///<summary>유향 수지</summary>
       _03_MYRRH_RESIN,
-      ///<summary시더우드 가루</summary
+      ///<summary>시더우드 가루</summary>
       _04_CEDARWOOD_POWDER,
   
       ...생략...
@@ -59,21 +61,21 @@
   //기술 태그
   public enum TechType { 
   
-      /// <summary
+      /// <summary>
       /// 조각
-      /// </summary
+      /// </summary>
       CARVE,
-      /// <summary
+      /// <summary>
       /// 압연
-      /// </summary
+      /// </summary>
       ROLLING,
-      /// <summary
+      /// <summary>
       /// 단조 용접
-      /// </summary
+      /// </summary>
       FORGED_WELDING,
-      /// <summary
+      /// <summary>
       /// 망치질
-      /// </summary
+      /// </summary>
       HAMMERING,
   
       ...생략...
@@ -81,13 +83,13 @@
   
   //속성 태그
   public enum Tags {
-      /// <summary
+      /// <summary>
       /// 번영
-      /// </summary
+      /// </summary>
       PROSPERITY,
-      /// <summary
+      /// <summary>
       /// 수지
-      /// </summary
+      /// </summary>
       RESIN,
   
       ...생략...
@@ -111,7 +113,7 @@
       public bool IsDestroyOnCraft = false;
       public string description;
       public int quality;
-      public Dictionary<Tags, int tagDic;
+      public Dictionary<Tags, int> tagDic;
   
   }
   
@@ -120,8 +122,8 @@
   public class UndeterminedItemInfo{
   
       public int quality;
-      public Dictionary<Tags, int tagDic;
-      public List<Item enteredItemList;
+      public Dictionary<Tags, int> tagDic;
+      public List<Item> enteredItemList;
   
   }
 ```
@@ -171,7 +173,7 @@
 <br>
 
 ```cpp
-          public UndeterminedItemInfo PlayTech(List<Item Items)
+          public UndeterminedItemInfo PlayTech(List<Item> Items)
           {
   
               //4종류의 연산을 순차적으로 시행.
@@ -278,8 +280,8 @@
   public static class TechRecipeChecker {
   
   
-          private static Dictionary<ItemID, TechRecipe dic_TechRecipes = null;
-          private static List<ItemID filteredRecipes = null;
+          private static Dictionary<ItemID, TechRecipe> dic_TechRecipes = null;
+          private static List<ItemID> filteredRecipes = null;
   
           public static ItemID CheckRecipe(UndeterminedItemInfo _inputItemInfo) {
   
@@ -287,7 +289,7 @@
                   initTechRecipeTable();
               }
   
-              filteredRecipes = new List<ItemID();
+              filteredRecipes = new List<ItemID>();
   
               //태그의 long타입 변환
               long tagsL = ConvertTagsToLongType(_inputItemInfo.tagDic);
@@ -340,13 +342,13 @@
 **첫번째 조합** : **시더우드 가루**와 **왁스**를 **압연**기술을 이용해 조합한다.   
  **압연**은 **공통된 태그**만을 반환하는 조합법으로 결과물의 태그에는 **안정-STABILITY**만이 존재하며   
 결과물 조건에 부합하는 아이템이 존재하지 않아 **알수없는 무언가 - UNKNOWN_SUBSTANCE**를 반환한다.   
-<hr
+<hr>
 
 ![cr2](https://github.com/don72-s/craftSystem/assets/66211881/b7ef06db-b913-4b21-9ffd-b04661352aa7)   
 **두번째 조합** : **시더우드 가루**와 **왁스**를 **수증기 증류**기술을 이용해 조합한다.   
 **수증기 증류**기술의 사용 조건은 **허브 태그를 가진 아이템 존재**이며, **시더우드 가루**에 **허브**태그가 존재하므로 조합이 가능하다.   
 결과물 조건에 부합하는 **믹스 오일**아이템을 반환한다.   
-<hr
+<hr>
 
 ![cr3](https://github.com/don72-s/craftSystem/assets/66211881/d04072b0-5e70-46bf-8bc6-b66b202b47c4)   
 **세번째 조합** : **시더우드 가루**를 **수증기 증류**기술을 이용해 조합한다.
